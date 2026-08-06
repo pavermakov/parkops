@@ -1,9 +1,12 @@
+from datetime import timedelta
+
 from django.utils import timezone
 
 from apps.attractions.models import Attraction
 from apps.tickets.models import Ticket
 
 from .exceptions import RideClosedError, TicketScanError
+from .models import ScanLog
 
 
 def check_attraction_status(attraction: Attraction):
@@ -34,3 +37,13 @@ def check_ticket_valid_today(ticket: Ticket):
         raise TicketScanError(message=TicketScanError.WRONG_TICKET_DATE_MESSAGE)
 
 
+def check_no_recent_scan(ticket: Ticket, attraction: Attraction):
+    if (
+        ScanLog.objects.filter(
+            ticket=ticket,
+            attraction=attraction,
+            success=True,
+            scanned_at__gte=timezone.now() - timedelta(minutes=5)
+        ).exists()
+    ):
+        raise TicketScanError(message=TicketScanError.RECENTLY_SCANNED_MESSAGE)

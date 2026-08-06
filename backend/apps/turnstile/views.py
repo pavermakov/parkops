@@ -9,9 +9,11 @@ from apps.turnstile.services import (
     RideClosedError,
     TicketScanError,
     check_attraction_status,
+    check_no_recent_scan,
     check_ticket_valid_today,
 )
 
+from .models import ScanLog
 from .serializers import ScanTicketSerializer
 
 
@@ -24,10 +26,24 @@ class ScanTicketView(APIView):
         ticket = get_object_or_404(Ticket, pk=serializer.validated_data['ticket_id'])
         
         try:
-            check_ticket_valid_today(ticket)
             check_attraction_status(attraction)
+            check_ticket_valid_today(ticket)
+            check_no_recent_scan(ticket, attraction)
         except (TicketScanError, RideClosedError) as err:
+            ScanLog.objects.create(
+                ticket=ticket,
+                attraction=attraction,
+                success=False,
+                message=err.message
+            )
+            
             return Response({"error": err.message}, status=status.HTTP_409_CONFLICT)
+
+        ScanLog.objects.create(
+            ticket=ticket,
+            attraction=attraction,
+            success=True
+        )
 
         return Response(
             {"success": f"Enjoy your ride on {attraction.name}!"},

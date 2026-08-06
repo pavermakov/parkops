@@ -15,6 +15,7 @@ class RideClosedError(Exception):
 class TicketScanError(Exception):
     DEFAULT_ERROR_MESSAGE = 'Failed to scan the ticket, please try again'
     WRONG_TICKET_DATE_MESSAGE = 'The ticket date is invalid'
+    RECENTLY_SCANNED_MESSAGE = 'You have already scanned your ticket. Try again later'
 
     def __init__(self, message: str = DEFAULT_ERROR_MESSAGE):
         self.message = message
