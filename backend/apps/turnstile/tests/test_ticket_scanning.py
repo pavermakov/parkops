@@ -4,8 +4,8 @@ import pytest
 from django.utils import timezone
 
 from apps.attractions.models import Attraction
-from apps.tickets.models import Ticket
 from apps.guests.models import Guest
+from apps.tickets.models import Ticket
 
 from ..exceptions import TicketScanError
 from ..models import ScanLog
@@ -13,17 +13,15 @@ from ..services import MINUTES_TILL_NEXT_SCAN, check_no_recent_scan
 
 
 @pytest.mark.django_db
-def test_passes_when_no_recent_scan():
-    guest = Guest.objects.create(first_name="Alice", last_name="Smith", height_cm=150)
-    ticket = Ticket.objects.create(guest=guest, valid_from=timezone.now())
+def test_passes_when_no_recent_scan(make_ticket):
+    ticket = make_ticket()
     attraction = Attraction.objects.create(name="Coaster", operation_status="running")
     check_no_recent_scan(ticket, attraction)
 
 
 @pytest.mark.django_db
-def test_raises_when_recently_scanned():
-    guest = Guest.objects.create(first_name="Alice", last_name="Smith", height_cm=150)
-    ticket = Ticket.objects.create(guest=guest, valid_from=timezone.now())
+def test_raises_when_recently_scanned(make_ticket):
+    ticket = make_ticket()
     attraction = Attraction.objects.create(name="Coaster", operation_status=Attraction.OperationStatus.RUNNING)
     ScanLog.objects.create(ticket=ticket, attraction=attraction, success=True)
 
@@ -32,9 +30,8 @@ def test_raises_when_recently_scanned():
 
 
 @pytest.mark.django_db
-def test_passes_when_scanned_after_interval():
-    guest = Guest.objects.create(first_name="Alice", last_name="Smith", height_cm=150)
-    ticket = Ticket.objects.create(guest=guest, valid_from=timezone.now())
+def test_passes_when_scanned_after_interval(make_ticket):
+    ticket = make_ticket()
     attraction = Attraction.objects.create(name="Coaster", operation_status=Attraction.OperationStatus.RUNNING)
 
     log = ScanLog.objects.create(ticket=ticket, attraction=attraction, success=True)
@@ -45,9 +42,8 @@ def test_passes_when_scanned_after_interval():
 
 
 @pytest.mark.django_db
-def test_passes_when_last_scan_failed():
-    guest = Guest.objects.create(first_name="Alice", last_name="Smith", height_cm=150)
-    ticket = Ticket.objects.create(guest=guest, valid_from=timezone.now())
+def test_passes_when_last_scan_failed(make_ticket):
+    ticket = make_ticket()
     attraction = Attraction.objects.create(name="Coaster", operation_status=Attraction.OperationStatus.RUNNING)
     ScanLog.objects.create(ticket=ticket, attraction=attraction, success=False)
 

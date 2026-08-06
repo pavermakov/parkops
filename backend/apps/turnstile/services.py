@@ -3,10 +3,10 @@ from datetime import timedelta
 from django.utils import timezone
 
 from apps.attractions.models import Attraction
-from apps.tickets.models import Ticket
 from apps.guests.models import Guest
+from apps.tickets.models import Ticket
 
-from .exceptions import RideClosedError, TicketScanError, GuestAccessError
+from .exceptions import GuestAccessError, RideClosedError, TicketScanError
 from .models import ScanLog
 
 MINUTES_TILL_NEXT_SCAN = 5
