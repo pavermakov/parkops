@@ -8,6 +8,8 @@ from apps.tickets.models import Ticket
 from .exceptions import RideClosedError, TicketScanError
 from .models import ScanLog
 
+MINUTES_TILL_NEXT_SCAN = 5
+
 
 def check_attraction_status(attraction: Attraction):
     match attraction.operation_status:
@@ -43,7 +45,7 @@ def check_no_recent_scan(ticket: Ticket, attraction: Attraction):
             ticket=ticket,
             attraction=attraction,
             success=True,
-            scanned_at__gte=timezone.now() - timedelta(minutes=5)
+            scanned_at__gte=timezone.now() - timedelta(minutes=MINUTES_TILL_NEXT_SCAN)
         ).exists()
     ):
         raise TicketScanError(message=TicketScanError.RECENTLY_SCANNED_MESSAGE)

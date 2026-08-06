@@ -7,7 +7,7 @@ from ..services import RideClosedError, check_attraction_status
 
 def test_attraction_status_running():
     attraction = Attraction(operation_status=Attraction.OperationStatus.RUNNING)
-    assert check_attraction_status(attraction)
+    check_attraction_status(attraction)
 
 
 def test_attraction_status_down_mechanical():
