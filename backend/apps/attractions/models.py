@@ -10,3 +10,7 @@ class Attraction(models.Model):
 
     name = models.CharField(max_length=255)
     operation_status = models.CharField(choices=OperationStatus, max_length=20)
+    min_height_cm = models.PositiveIntegerField(null=True, blank=True)
+
+    def __str__(self):
+        return f'{self.name} ({self.operation_status})'

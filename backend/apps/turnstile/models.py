@@ -10,3 +10,10 @@ class ScanLog(models.Model):
     success = models.BooleanField()
     message = models.CharField(max_length=255, null=True, blank=True)
     scanned_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        status = "OK" if self.success else "DENIED"
+        return (
+            f'{self.ticket.guest.first_name} @ {self.attraction.name} - '
+            f'{status} ({self.scanned_at.strftime("%B %-d %H:%M")})'
+        )  

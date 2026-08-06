@@ -23,3 +23,15 @@ class TicketScanError(Exception):
 
     def __str__(self):
         return f'[TicketScanError] {self.message}'
+
+
+class GuestAccessError(Exception):
+    DEFAULT_ERROR_MESSAGE = 'Sorry, you are not allowed to ride this attraction'
+    MIN_HEIGHT_ERROR_MESSAGE = 'Sorry, you are not tall enough for this ride'
+
+    def __init__(self, message: str = DEFAULT_ERROR_MESSAGE):
+        self.message = message
+        super().__init__(message)
+
+    def __str__(self):
+        return f'[GuestAccessError] {self.message}'

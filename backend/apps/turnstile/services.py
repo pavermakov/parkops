@@ -4,8 +4,9 @@ from django.utils import timezone
 
 from apps.attractions.models import Attraction
 from apps.tickets.models import Ticket
+from apps.guests.models import Guest
 
-from .exceptions import RideClosedError, TicketScanError
+from .exceptions import RideClosedError, TicketScanError, GuestAccessError
 from .models import ScanLog
 
 MINUTES_TILL_NEXT_SCAN = 5
@@ -49,3 +50,11 @@ def check_no_recent_scan(ticket: Ticket, attraction: Attraction):
         ).exists()
     ):
         raise TicketScanError(message=TicketScanError.RECENTLY_SCANNED_MESSAGE)
+
+
+def check_guest_requirements(guest: Guest, attraction: Attraction):
+    if not attraction.min_height_cm:
+        return
+
+    if guest.height_cm < attraction.min_height_cm:
+        raise GuestAccessError(GuestAccessError.MIN_HEIGHT_ERROR_MESSAGE)

@@ -6,9 +6,11 @@ from rest_framework.views import APIView
 from apps.attractions.models import Attraction
 from apps.tickets.models import Ticket
 from apps.turnstile.services import (
+    GuestAccessError,
     RideClosedError,
     TicketScanError,
     check_attraction_status,
+    check_guest_requirements,
     check_no_recent_scan,
     check_ticket_valid_today,
 )
@@ -29,7 +31,8 @@ class ScanTicketView(APIView):
             check_attraction_status(attraction)
             check_ticket_valid_today(ticket)
             check_no_recent_scan(ticket, attraction)
-        except (TicketScanError, RideClosedError) as err:
+            check_guest_requirements(ticket.guest, attraction)
+        except (TicketScanError, RideClosedError, GuestAccessError) as err:
             ScanLog.objects.create(
                 ticket=ticket,
                 attraction=attraction,
@@ -49,8 +52,3 @@ class ScanTicketView(APIView):
             {"success": f"Enjoy your ride on {attraction.name}!"},
             status=status.HTTP_200_OK,
         )
-
-
-
-
-
