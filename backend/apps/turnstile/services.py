@@ -3,24 +3,13 @@ from django.utils import timezone
 from apps.attractions.models import Attraction
 from apps.tickets.models import Ticket
 
+from .exceptions import RideClosedError, TicketScanError
 
-class RideClosedError(Exception):
-    DEFAULT_ERROR_MESSAGE = "Sorry, the ride is closed at this moment"
-    DOWN_MECHANICAL_ERROR_MESSAGE = "Sorry, the ride broke down"
-    DOWN_WEATHER_ERROR_MESSAGE = "Sorry, the ride is down for poor weather conditions"
-    CLOSED_FOR_TODAY_ERROR_MESSAGE = "Sorry, the ride is closed for today"
 
-    def __init__(self, message: str = DEFAULT_ERROR_MESSAGE):
-        self.message = message
-        super().__init__(message)
-
-    def __str__(self):
-        return f"[RideClosedError] {self.message}"
-
-def check_attraction_status(attraction: Attraction) -> bool:
+def check_attraction_status(attraction: Attraction):
     match attraction.operation_status:
         case Attraction.OperationStatus.RUNNING:
-            return True
+            return
 
         case Attraction.OperationStatus.DOWN_MECHANICAL:
             raise RideClosedError(RideClosedError.DOWN_MECHANICAL_ERROR_MESSAGE)
@@ -35,18 +24,13 @@ def check_attraction_status(attraction: Attraction) -> bool:
             raise RideClosedError(RideClosedError.DEFAULT_ERROR_MESSAGE)
 
 
-class TicketScanError(Exception):
-    DEFAULT_ERROR_MESSAGE = 'Failed to scan the ticket, please try again'
-    WRONG_TICKET_DATE_MESSAGE = 'The ticket date is invalid'
-
-    def __init__(self, message: str = DEFAULT_ERROR_MESSAGE):
-        self.message = message
-        super().__init__(message)
-
-    def __str__(self):
-        return f'[TicketScanError] {self.message}'
-
-
-def check_ticked_purchased_today(ticket: Ticket):
-    if ticket.purchased_at.date() != timezone.now().date():
+def check_ticket_valid_today(ticket: Ticket):
+    if ticket.valid_to is None:
+        is_valid = ticket.valid_from.date() <= timezone.now().date()
+    else:
+        is_valid = ticket.valid_from.date() <= timezone.now().date() <= ticket.valid_to.date()
+        
+    if not is_valid:
         raise TicketScanError(message=TicketScanError.WRONG_TICKET_DATE_MESSAGE)
+
+
