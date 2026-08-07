@@ -1,3 +1,6 @@
+from decimal import Decimal
+
+from django.utils import timezone
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -5,7 +8,23 @@ from rest_framework.views import APIView
 from apps.guests.models import Guest
 from apps.tickets.models import Ticket
 
-from .serializers import TicketPurchaseSerializer
+from .serializers import TicketPriceSerializer, TicketPurchaseSerializer
+
+DAILY_TICKET_PRICE = Decimal('59.99')
+
+class TicketPriceView(APIView):
+    def get(self, request):
+        serializer = TicketPriceSerializer(data=request.query_params)
+        serializer.is_valid(raise_exception=True)
+
+        data = serializer.validated_data
+        date_from = data.get('date_from')
+        date_to = data.get('date_to', timezone.now().date())
+
+        duration_days = (date_to - date_from).days or 1
+        final_price = DAILY_TICKET_PRICE * duration_days
+
+        return Response({ 'price': final_price }, status.HTTP_200_OK)
 
 
 class PurchaseTicketView(APIView):

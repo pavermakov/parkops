@@ -6,6 +6,28 @@ from rest_framework import serializers
 from apps.guests.models import Guest
 
 
+class TicketPriceSerializer(serializers.Serializer):
+    date_from = serializers.DateField(required=True)
+    date_to = serializers.DateField(required=False)
+
+    def validate(self, attrs):
+        date_from = attrs.get('date_from')
+        date_to = attrs.get('date_to')
+
+        # validate ticket's start date not in the past
+        if date_from < timezone.now().date():
+            raise serializers.ValidationError('date_from must be today or later')
+
+        # validate ticket's end date (if exists) is later than its start date
+        if date_to and date_to < date_from:
+            raise serializers.ValidationError({
+                'date_to': 'date_to must be greater than or equal to date_from.'
+            })
+
+        return attrs
+
+
+
 class TicketPurchaseSerializer(serializers.Serializer):
     guest_id = serializers.PrimaryKeyRelatedField(queryset=Guest.objects.all(), source='guest', required=False)
     first_name = serializers.CharField(required=False)
@@ -32,7 +54,7 @@ class TicketPurchaseSerializer(serializers.Serializer):
             raise serializers.ValidationError('valid_from must be today or later')
 
         # validate ticket's end date (if exists) is later than its start date
-        if valid_to and valid_to < attrs['valid_from']:
+        if valid_to and valid_to < valid_from:
             raise serializers.ValidationError({
                 'valid_to': 'valid_to must be greater than or equal to valid_from.'
             })
