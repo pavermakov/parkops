@@ -12,25 +12,30 @@ class PurchaseTicketView(APIView):
     def post(self, request):
         serializer = TicketPurchaseSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        data = serializer.validated_data
+        validated_data = serializer.validated_data
 
-        guest = data.pop('guest', None)
+        guest = validated_data.get('guest')
 
-        if guest is None:
+        # TODO: good place to wrap into transaction?
+        if not guest:
             guest = Guest.objects.create(
-                first_name=data.pop('first_name'),
-                last_name=data.pop('last_name'),
-                height_cm=data.pop('height_cm'),
+                first_name=validated_data.get('first_name'),
+                last_name=validated_data.get('last_name'),
+                height_cm=validated_data.get('height_cm'),
             )
-        else:
-            data.pop('first_name', None)
-            data.pop('last_name', None)
-            data.pop('height_cm', None)
 
-        new_ticket = Ticket.objects.create(guest=guest, **data)
-        response = { 'success': True, 'ticket_id': new_ticket.id }
+        new_ticket = Ticket.objects.create(
+            guest=guest,
+            valid_from=validated_data.get('valid_from'),
+            valid_to=validated_data.get('valid_to'),
+            price=validated_data.get('price')
+        )
 
-        if guest:
-            response['guest_id'] = guest.id
+        return Response(
+            data={
+                'success': True,
+                'ticket_id': new_ticket.id
+            },
+            status=status.HTTP_201_CREATED
+        )
 
-        return Response(response, status=status.HTTP_200_OK)

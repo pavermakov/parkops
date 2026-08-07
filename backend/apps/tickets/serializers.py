@@ -20,15 +20,18 @@ class TicketPurchaseSerializer(serializers.Serializer):
         valid_from = attrs.get('valid_from')
         valid_to = attrs.get('valid_to')
 
+        # validate new guest passed required data or existing guest passed their id
         if not guest:
             missing_guest_info = [field for field in ['first_name', 'last_name', 'height_cm'] if field not in attrs]
 
             if missing_guest_info:
                 raise serializers.ValidationError(f'guest_id or {", ".join(missing_guest_info)} required')
 
+        # validate ticket's start date not in the past
         if valid_from < timezone.now().date():
             raise serializers.ValidationError('valid_from must be today or later')
 
+        # validate ticket's end date (if exists) is later than its start date
         if valid_to and valid_to < attrs['valid_from']:
             raise serializers.ValidationError({
                 'valid_to': 'valid_to must be greater than or equal to valid_from.'
