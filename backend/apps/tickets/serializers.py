@@ -3,12 +3,18 @@ from decimal import Decimal
 from django.utils import timezone
 from rest_framework import serializers
 
-from apps.guests.models import Guest
+from apps.guests.models import DiscountCategory, Guest
 
 
 class TicketPriceSerializer(serializers.Serializer):
     date_from = serializers.DateField(required=True)
     date_to = serializers.DateField(required=False)
+    
+    discount_id = serializers.PrimaryKeyRelatedField(
+        queryset=DiscountCategory.objects.all(),
+        source='discount',
+        required=False
+    )
 
     def validate(self, attrs):
         date_from = attrs.get('date_from')
@@ -25,7 +31,6 @@ class TicketPriceSerializer(serializers.Serializer):
             })
 
         return attrs
-
 
 
 class TicketPurchaseSerializer(serializers.Serializer):

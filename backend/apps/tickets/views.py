@@ -20,11 +20,15 @@ class TicketPriceView(APIView):
         data = serializer.validated_data
         date_from = data.get('date_from')
         date_to = data.get('date_to', timezone.now().date())
+        discount = data.get('discount')
 
         duration_days = (date_to - date_from).days or 1
-        final_price = DAILY_TICKET_PRICE * duration_days
+        price = DAILY_TICKET_PRICE * duration_days
 
-        return Response({ 'price': final_price }, status.HTTP_200_OK)
+        if discount:
+            price *= (1 - Decimal(discount.discount_percent) / 100)
+
+        return Response({ 'price': price }, status.HTTP_200_OK)
 
 
 class PurchaseTicketView(APIView):
