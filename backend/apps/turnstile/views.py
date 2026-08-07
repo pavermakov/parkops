@@ -1,4 +1,8 @@
+from datetime import timedelta
+
+from django.db.models import Count, F, Q
 from django.shortcuts import get_object_or_404
+from django.utils import timezone
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -40,7 +44,10 @@ class ScanTicketView(APIView):
                 message=err.message
             )
             
-            return Response({"error": err.message}, status=status.HTTP_409_CONFLICT)
+            return Response(
+                data={"error": err.message},
+                status=status.HTTP_409_CONFLICT
+            )
 
         ScanLog.objects.create(
             ticket=ticket,
@@ -49,6 +56,40 @@ class ScanTicketView(APIView):
         )
 
         return Response(
-            {"success": f"Enjoy your ride on {attraction.name}!"},
+            data={"success": f"Enjoy your ride on {attraction.name}!"},
             status=status.HTTP_200_OK,
+        )
+
+class ReportRidersCount(APIView):
+    def get(self, request):
+        past_hour_scans = ScanLog.objects.filter(scanned_at__gte=timezone.now() - timedelta(hours=1))
+
+        totals = past_hour_scans.aggregate(
+            total_scans=Count('id'),
+            successful_scans=Count('id', filter=Q(success=True)),
+            failed_scans=Count('id', filter=Q(success=False))
+        )
+
+        # TODO: how does values work?
+        # TODO: What is Q?
+        per_attraction = past_hour_scans.values('attraction_id', 'attraction__name').annotate(
+            total_scans=Count('id'),
+            successful_scans=Count('id', filter=Q(success=True)),
+            failed_scans=Count('id', filter=Q(success=False)),
+        )
+
+        attractions = [
+            {
+                'id': row['attraction_id'],
+                'name': row['attraction__name'],
+                'total_scans': row['total_scans'],
+                'successful_scans': row['successful_scans'],
+                'failed_scans': row['failed_scans'],
+            }
+            for row in per_attraction
+        ]
+
+        return Response(
+            data={ **totals, 'attractions': attractions },
+            status=status.HTTP_200_OK
         )

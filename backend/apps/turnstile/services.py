@@ -32,9 +32,9 @@ def check_attraction_status(attraction: Attraction):
 
 def check_ticket_valid_today(ticket: Ticket):
     if ticket.valid_to is None:
-        is_valid = ticket.valid_from.date() <= timezone.now().date()
+        is_valid = ticket.valid_from <= timezone.now().date()
     else:
-        is_valid = ticket.valid_from.date() <= timezone.now().date() <= ticket.valid_to.date()
+        is_valid = ticket.valid_from <= timezone.now().date() <= ticket.valid_to
         
     if not is_valid:
         raise TicketScanError(message=TicketScanError.WRONG_TICKET_DATE_MESSAGE)
