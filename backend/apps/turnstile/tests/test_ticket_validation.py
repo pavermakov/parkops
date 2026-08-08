@@ -14,7 +14,7 @@ def test_single_day_ticket_purchased_today():
 
     ticket = Ticket(
         purchased_at=purchased_at,
-        valid_from=purchased_at,
+        valid_from=purchased_at.date(),
         valid_to = None
     )
 
@@ -23,7 +23,7 @@ def test_single_day_ticket_purchased_today():
 
 def test_single_ticket_purchased_for_tomorrow():
     purchased_at = datetime(2026, 8, 6, tzinfo=timezone.get_current_timezone())
-    valid_from = timezone.now() + timedelta(days=1)
+    valid_from = (timezone.now() + timedelta(days=1)).date()
 
     ticket = Ticket(
         purchased_at=purchased_at,
@@ -37,8 +37,8 @@ def test_single_ticket_purchased_for_tomorrow():
 
 def test_multiday_ticket_for_today():
     purchased_at = datetime(2026, 8, 1, tzinfo=timezone.get_current_timezone())
-    valid_from = timezone.now() - timedelta(days=1)
-    valid_to = timezone.now() + timedelta(days=1)
+    valid_from = (timezone.now() - timedelta(days=1)).date()
+    valid_to = (timezone.now() + timedelta(days=1)).date()
 
     ticket = Ticket(
         purchased_at=purchased_at,
@@ -51,8 +51,8 @@ def test_multiday_ticket_for_today():
 
 def test_multiday_ticket_for_future():
     purchased_at = datetime(2026, 8, 1, tzinfo=timezone.get_current_timezone())
-    valid_from = timezone.now() + timedelta(days=1)
-    valid_to = timezone.now() + timedelta(days=2)
+    valid_from = (timezone.now() + timedelta(days=1)).date()
+    valid_to = (timezone.now() + timedelta(days=2)).date()
 
     ticket = Ticket(
         purchased_at=purchased_at,

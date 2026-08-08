@@ -1,0 +1,14 @@
+{
+  "/tickets": {
+    "target": "http://localhost:8000",
+    "secure": false
+  },
+  "/discounts": {
+    "target": "http://localhost:8000",
+    "secure": false
+  },
+  "/turnstile": {
+    "target": "http://localhost:8000",
+    "secure": false
+  }
+}

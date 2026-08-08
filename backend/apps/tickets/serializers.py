@@ -3,13 +3,15 @@ from decimal import Decimal
 from django.utils import timezone
 from rest_framework import serializers
 
-from apps.guests.models import DiscountCategory, Guest
+from apps.discounts.models import DiscountCategory
+from apps.guests.models import Guest
 
 
 class TicketPriceSerializer(serializers.Serializer):
     date_from = serializers.DateField(required=True)
     date_to = serializers.DateField(required=False)
-    
+
+    # TODO: explore on 'PrimaryKeyRelatedField' and 'source'
     discount_id = serializers.PrimaryKeyRelatedField(
         queryset=DiscountCategory.objects.all(),
         source='discount',

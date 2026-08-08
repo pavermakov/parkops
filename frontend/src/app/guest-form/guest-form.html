@@ -1,0 +1,172 @@
+<div class="mx-auto max-w-4xl p-6">
+  <h1 class="mb-6 text-2xl font-semibold text-gray-900">Guest details</h1>
+
+  <div class="grid gap-8 md:grid-cols-[1fr_18rem] md:items-start">
+    <form [formGroup]="form" (ngSubmit)="onSubmit()" class="space-y-4" novalidate>
+      <div>
+        <label for="firstName" class="mb-1 block text-sm font-medium text-gray-700">
+          First name <span class="text-red-600">*</span>
+        </label>
+        <input
+          id="firstName"
+          type="text"
+          formControlName="firstName"
+          autocomplete="given-name"
+          class="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none"
+        />
+        @if (showError('firstName')) {
+          <p class="mt-1 text-sm text-red-600">First name is required.</p>
+        }
+      </div>
+
+      <div>
+        <label for="lastName" class="mb-1 block text-sm font-medium text-gray-700">
+          Last name <span class="text-red-600">*</span>
+        </label>
+        <input
+          id="lastName"
+          type="text"
+          formControlName="lastName"
+          autocomplete="family-name"
+          class="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none"
+        />
+        @if (showError('lastName')) {
+          <p class="mt-1 text-sm text-red-600">Last name is required.</p>
+        }
+      </div>
+
+      <div>
+        <label for="heightCm" class="mb-1 block text-sm font-medium text-gray-700">
+          Height (cm) <span class="text-red-600">*</span>
+        </label>
+        <input
+          id="heightCm"
+          type="number"
+          formControlName="heightCm"
+          min="30"
+          max="250"
+          step="1"
+          inputmode="numeric"
+          class="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none"
+        />
+        @if (showError('heightCm')) {
+          <p class="mt-1 text-sm text-red-600">
+            @if (form.controls.heightCm.hasError('required')) {
+              Height is required.
+            } @else {
+              Height must be between 30 and 250 cm.
+            }
+          </p>
+        }
+      </div>
+
+      <div>
+        <label for="dateFrom" class="mb-1 block text-sm font-medium text-gray-700">
+          Date from <span class="text-red-600">*</span>
+        </label>
+        <input
+          id="dateFrom"
+          type="date"
+          formControlName="dateFrom"
+          [min]="today"
+          class="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none"
+        />
+        @if (showError('dateFrom')) {
+          <p class="mt-1 text-sm text-red-600">
+            @if (form.controls.dateFrom.hasError('required')) {
+              Date from is required.
+            } @else {
+              Date from must be today or later.
+            }
+          </p>
+        }
+      </div>
+
+      <div>
+        <label for="dateTo" class="mb-1 block text-sm font-medium text-gray-700">
+          Date to <span class="text-gray-400">(optional)</span>
+        </label>
+        <input
+          id="dateTo"
+          type="date"
+          formControlName="dateTo"
+          [min]="form.controls.dateFrom.value || today"
+          class="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none"
+        />
+        @if (form.hasError('dateRange') && form.controls.dateTo.touched) {
+          <p class="mt-1 text-sm text-red-600">Date to must be on or after date from.</p>
+        }
+      </div>
+
+      <div>
+        <label for="discountId" class="mb-1 block text-sm font-medium text-gray-700">
+          Discount <span class="text-gray-400">(optional)</span>
+        </label>
+        <select
+          id="discountId"
+          formControlName="discountId"
+          class="w-full rounded-md border border-gray-300 bg-white px-3 py-2 focus:border-blue-500 focus:outline-none"
+        >
+          <option value="">No discount</option>
+          @for (discount of discountOptions(); track discount.id) {
+            <option [value]="discount.id">
+              {{ discount.title }} ({{ discount.discount_percent }}%)
+            </option>
+          }
+        </select>
+      </div>
+
+      <button
+        type="submit"
+        class="w-full rounded-md bg-blue-600 px-4 py-2 font-medium text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-gray-300"
+        [disabled]="form.invalid"
+      >
+        Continue
+      </button>
+    </form>
+
+    <aside
+      class="relative overflow-hidden rounded-lg border border-gray-200 bg-gray-50 p-5 md:sticky md:top-6"
+      aria-live="polite"
+      [attr.aria-busy]="quote().loading"
+    >
+      <h2 class="text-sm font-medium tracking-wide text-gray-500 uppercase">Price</h2>
+
+      @if (quote().price !== null) {
+        <p class="mt-2 text-3xl font-semibold text-gray-900">
+          {{ quote().price | currency: 'USD' }}
+        </p>
+        <p class="mt-1 text-sm text-gray-500">{{ days() }} {{ days() === 1 ? 'day' : 'days' }}</p>
+        @if (appliedDiscount(); as discount) {
+          <p class="mt-2 text-sm font-medium text-green-700">
+            {{ discount.title }} −{{ discount.discount_percent }}%
+          </p>
+        }
+      } @else if (quote().loading) {
+        <p class="mt-2 text-3xl font-semibold text-gray-200">&nbsp;</p>
+      } @else {
+        <p class="mt-2 text-sm text-gray-500">Pick your dates to see a price.</p>
+      }
+
+      @if (quote().error) {
+        <p class="mt-2 text-sm text-red-600">Could not load the price. Check the dates.</p>
+      }
+
+      @if (quote().loading) {
+        <div
+          class="absolute inset-0 grid place-items-center bg-gray-50/70 backdrop-blur-[1px]"
+          role="status"
+        >
+          <span
+            class="size-6 animate-spin rounded-full border-2 border-gray-300 border-t-blue-600"
+          ></span>
+          <span class="sr-only">Loading price</span>
+        </div>
+      }
+    </aside>
+  </div>
+
+  @if (submitted(); as value) {
+    <pre class="mt-6 rounded-md bg-gray-100 p-4 text-sm">{{ value | json }}</pre>
+  }
+</div>
