@@ -12,11 +12,13 @@ import {
   catchError,
   debounceTime,
   distinctUntilChanged,
+  forkJoin,
   map,
   of,
   scan,
   startWith,
   switchMap,
+  timer,
 } from 'rxjs';
 
 import { DiscountService } from '../discounts/discount-service';
@@ -52,6 +54,9 @@ interface QuoteState {
 }
 
 const IDLE_QUOTE: QuoteState = { price: null, loading: false, error: false };
+
+/** Floor on how long the loader stays up, so a fast response doesn't flash it. */
+const MIN_LOADER_MS = 1000;
 
 @Component({
   selector: 'app-guest-form',
@@ -106,9 +111,15 @@ export class GuestForm {
           return of<QuoteEvent>({ kind: 'idle' });
         }
 
-        return this.tickets.getPrice(from, to, discountId).pipe(
+        const request$ = this.tickets.getPrice(from, to, discountId).pipe(
           map((res) => ({ kind: 'ready', price: res.price }) as QuoteEvent),
           catchError(() => of<QuoteEvent>({ kind: 'error' })),
+        );
+
+        // forkJoin settles once both complete, so the result lands no earlier
+        // than MIN_LOADER_MS even when the request returns immediately.
+        return forkJoin([request$, timer(MIN_LOADER_MS)]).pipe(
+          map(([event]) => event),
           startWith<QuoteEvent>({ kind: 'loading' }),
         );
       }),
